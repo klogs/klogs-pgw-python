@@ -9,9 +9,6 @@ from datetime import datetime
 
 
 # Constants
-TICKS_AT_UNIX_EPOCH = 621355968000000000
-
-
 def create_random_string(length: int = 32) -> str:
     """
     Generate a URL-friendly random string.
@@ -33,10 +30,8 @@ def utc_ticks() -> int:
     Returns:
         Current UTC time as .NET ticks
     """
-    # Get current UTC time in nanoseconds
-    nanos = int(time.time() * 1e9)
-    # Convert to .NET ticks (100-nanosecond intervals since Jan 1, 0001)
-    return (nanos // 100) + TICKS_AT_UNIX_EPOCH
+    # Get current unix time in milliseconds
+    return int(time.time() * 1000)
 
 
 def create_hmac_signature(cipher_text: str, secret_key: str) -> str:
