@@ -9,6 +9,8 @@ from ..models import (
     ProvisionCommitRequest,
     CommissionsRequest,
     CommissionResponse,
+    RefundRequest,
+    VoidRequest,
     Response
 )
 
@@ -20,24 +22,9 @@ class CardPaymentService:
     """Card Payment service client"""
     
     def __init__(self, http_client: 'KlogsHttpClient'):
-        """
-        Initialize card payment service.
-        
-        Args:
-            http_client: HTTP client instance
-        """
         self.http = http_client
     
     def pay(self, request: CreatePaymentRequest) -> CardPaymentResponse:
-        """
-        Process a card payment.
-        
-        Args:
-            request: Payment request data
-            
-        Returns:
-            Card payment response
-        """
         return self.http.post(
             "/api/cardPayment",
             body=request,
@@ -45,27 +32,12 @@ class CardPaymentService:
         )
     
     def create_payment_token(self) -> PaymentTokenResponse:
-        """
-        Create a payment token.
-        
-        Returns:
-            Payment token response
-        """
         return self.http.get(
             "/api/cardPayment/token",
             response_class=PaymentTokenResponse
         )
     
     def provision_commit(self, request: ProvisionCommitRequest) -> Response:
-        """
-        Commit a provision.
-        
-        Args:
-            request: Provision commit request
-            
-        Returns:
-            Response
-        """
         return self.http.post(
             "/api/cardPayment/provisionCommit",
             body=request,
@@ -73,22 +45,21 @@ class CardPaymentService:
         )
     
     def get_commissions_by_bin(self, request: CommissionsRequest) -> CommissionResponse:
-        """
-        Get commissions by BIN number.
-        
-        Args:
-            request: Commissions request
-            
-        Returns:
-            Commission response
-        """
-        params = {}
+        params = []
         if request.amount is not None:
-            params['amount'] = str(request.amount)
+            params.append(('amount', str(request.amount)))
         if request.bin_number:
-            params['binNumber'] = request.bin_number
+            params.append(('binNumber', request.bin_number))
         if request.currency:
-            params['currency'] = request.currency
+            params.append(('currency', request.currency))
+        if request.cardId:
+            params.append(('cardId', request.cardId))
+        if request.product_codes:
+            for code in request.product_codes:
+                params.append(('productCode', code))
+        if request.product_category_codes:
+            for code in request.product_category_codes:
+                params.append(('productCategoryCode', code))
         
         return self.http.get(
             "/api/cardPayment/installments",

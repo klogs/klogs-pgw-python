@@ -106,6 +106,10 @@ class CreatePaymentRequest:
     reference_code: Optional[str] = None
     use_stored_card: bool = False
     card: Optional[CreditCard] = None
+    owner_key: Optional[str] = None
+    card_id: Optional[str] = None
+    save_card: bool = False
+    customer_ip: Optional[str] = None
     reward: Optional[Reward] = None
     invoice: Optional[Address] = None
     shipping: Optional[Address] = None
@@ -117,7 +121,7 @@ class CreatePaymentRequest:
     phone: Optional[str] = None
     return_url: Optional[str] = None
     charge_type: Optional[ChargeType] = None
-    payment_system_id: Optional[str] = None
+    payment_system_code: Optional[str] = None
     national_number: Optional[str] = None
     products: Optional[List[Product]] = None
 
@@ -129,6 +133,10 @@ class CreatePaymentRequest:
             "referenceCode": self.reference_code,
             "useStoredCard": self.use_stored_card,
             "card": self.card.to_dict() if self.card else None,
+            "ownerKey": self.owner_key,
+            "cardId": self.card_id,
+            "saveCard": self.save_card if self.save_card else None,
+            "customerIp": self.customer_ip,
             "reward": self.reward.to_dict() if self.reward else None,
             "invoice": self.invoice.to_dict() if self.invoice else None,
             "shipping": self.shipping.to_dict() if self.shipping else None,
@@ -140,7 +148,7 @@ class CreatePaymentRequest:
             "phone": self.phone,
             "returnURL": self.return_url,
             "chargeType": self.charge_type.value if self.charge_type else None,
-            "paymentSystemId": self.payment_system_id,
+            "paymentSystemCode": self.payment_system_code,
             "nationalNumber": self.national_number,
             "products": [p.to_dict() for p in self.products] if self.products else None
         }
@@ -224,12 +232,18 @@ class CommissionsRequest:
     amount: Optional[float] = None
     bin_number: Optional[str] = None
     currency: Optional[str] = None
+    cardId: Optional[str] = None
+    product_codes: Optional[List[str]] = None
+    product_category_codes: Optional[List[str]] = None
 
     def to_dict(self):
         return {
             "amount": self.amount,
             "binNumber": self.bin_number,
-            "currency": self.currency
+            "currency": self.currency,
+            "cardId": self.cardId,
+            "productCodes": self.product_codes,
+            "productCategoryCodes": self.product_category_codes
         }
 
 
@@ -246,3 +260,84 @@ class CommissionResponse(Response):
             error=base.error,
             installments=data.get("installments")
         )
+
+
+@dataclass
+class HostedPaymentRequest:
+    """Hosted payment request model"""
+    amount: float
+    currency: Optional[str] = None
+    reference_code: Optional[str] = None
+    full_name: Optional[str] = None
+    national_number: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    return_url: Optional[str] = None
+    invoice: Optional[Address] = None
+    shipping: Optional[Address] = None
+    explanation: Optional[str] = None
+    additional_data: Optional[Dict[str, str]] = None
+    charge_type: Optional[ChargeType] = None
+    products: Optional[List[Product]] = None
+    payment_method: Optional[str] = None
+
+    def to_dict(self):
+        data = {
+            "amount": self.amount,
+            "currency": self.currency,
+            "referenceCode": self.reference_code,
+            "fullName": self.full_name,
+            "nationalNumber": self.national_number,
+            "email": self.email,
+            "phone": self.phone,
+            "returnURL": self.return_url,
+            "invoice": self.invoice.to_dict() if self.invoice else None,
+            "shipping": self.shipping.to_dict() if self.shipping else None,
+            "explanation": self.explanation,
+            "additionalData": self.additional_data,
+            "chargeType": self.charge_type.value if self.charge_type else None,
+            "products": [p.to_dict() for p in self.products] if self.products else None,
+            "paymentMethod": self.payment_method,
+        }
+        return {k: v for k, v in data.items() if v is not None}
+
+
+@dataclass
+class CreateHostedPaymentResponse(Response):
+    """Hosted payment creation response"""
+    link: Optional[str] = None
+    payment_id: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        base = Response.from_dict(data)
+        return cls(
+            success=base.success,
+            error=base.error,
+            link=data.get("link"),
+            payment_id=data.get("paymentId")
+        )
+
+
+@dataclass
+class RefundRequest:
+    """Refund request"""
+    reference_code: str
+    amount: float
+
+    def to_dict(self):
+        return {
+            "referenceCode": self.reference_code,
+            "amount": self.amount
+        }
+
+
+@dataclass
+class VoidRequest:
+    """Void (cancel) request"""
+    reference_code: str
+
+    def to_dict(self):
+        return {
+            "referenceCode": self.reference_code
+        }
